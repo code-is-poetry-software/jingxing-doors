@@ -1,0 +1,50 @@
+{
+  "name": "jingxing-doors",
+  "version": "0.1.0",
+  "description": "Jingxing door controller SDK and LAN daemon. 景兴JX-102脱机门禁控制器服务器端SDK和局域网守护进程",
+  "keywords": [
+    "JX-102",
+    "景兴",
+    "门禁"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/code-is-poetry-software/yibu-daemon.git"
+  },
+  "main": "index.ts",
+  "bin": {
+    "wiegand-daemon": "./bin/index.js"
+  },
+  "files": [
+    "bin/*",
+    "dist/*",
+    "**/*.ts",
+    "*.example"
+  ],
+  "scripts": {
+    "start": "nodemon --watch '**/*.ts' --exec 'ts-node' index.ts",
+    "test": "echo \"No test specified.\" && exit 0",
+    "build": "tsc"
+  },
+  "author": "Uice Lu",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^12.6.8",
+    "nodemon": "^1.19.1",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.3"
+  },
+  "dependencies": {
+    "@types/crc": "^3.4.0",
+    "@types/dotenv": "^6.1.1",
+    "@types/moment-timezone": "^0.5.12",
+    "crc": "^3.8.0",
+    "dotenv": "^8.1.0",
+    "local-ip": "^2.0.0",
+    "moment": "^2.24.0",
+    "moment-timezone": "^0.5.26",
+    "node-crc16": "^2.0.7",
+    "quick-local-ip": "^1.0.7",
+    "wiegand-control": "^1.0.3"
+  }
+}
