@@ -1,6 +1,6 @@
 {
   "name": "jingxing-doors",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Jingxing door controller SDK and LAN daemon. 景兴JX-102脱机门禁控制器服务器端SDK和局域网守护进程",
   "keywords": [
     "JX-102",
@@ -9,11 +9,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/code-is-poetry-software/yibu-daemon.git"
+    "url": "https://github.com/code-is-poetry-software/jingxing-doors.git"
   },
   "main": "index.ts",
   "bin": {
-    "wiegand-daemon": "./bin/index.js"
+    "jingxing-daemon": "./bin/index.js"
   },
   "files": [
     "bin/*",
@@ -37,7 +37,6 @@
   "dependencies": {
     "@types/crc": "^3.4.0",
     "@types/dotenv": "^6.1.1",
-    "@types/moment-timezone": "^0.5.12",
     "crc": "^3.8.0",
     "dotenv": "^8.1.0",
     "local-ip": "^2.0.0",

@@ -8,7 +8,8 @@ import testCommand from "./utils/testCommand";
 
 env.config();
 
-export const JxCtl = Controller;
+export type { Controller as JxCtl };
+export { parseData };
 
 const localIp = getLocalIp();
 console.log(`[DMN] Local ip address is ${localIp}.`);
@@ -17,6 +18,7 @@ const localPort = +(process.env.LOCAL_PORT || 6000);
 const remotePort = +(process.env.REMOTE_PORT || 8000);
 const remoteHost = process.env.REMOTE_HOST;
 const storeId = process.env.STORE_ID;
+const reconnectInterval = +(process.env.RECONNECT_INTERVAL || "") || 5000;
 
 let controllerBySerial: { [serial: number]: Controller } = {};
 
@@ -58,10 +60,15 @@ socket.bind(localPort);
 
 // testCommand(socket);
 
-client.on("connect", async () => {
+client.on("connect", () => {
   const address = client.remoteAddress;
   const port = client.remotePort;
-  console.log(`[TCP] Connected to ${address}:${port}.`);
+  console.log(
+    `[TCP] Connected to ${address}:${port}, local port: ${client.localPort}.`
+  );
+  if (client.writable) {
+    client.write(`store ${storeId}\r\n`);
+  }
   client.setTimeout(360000);
 });
 
@@ -72,10 +79,12 @@ client.on("timeout", () => {
 
 client.on("close", () => {
   if (!remoteHost || !remotePort) return;
-  console.log(`[TCP] Closed, reconnect in 10 seconds.`);
+  console.log(
+    `[TCP] Closed, reconnect in ${reconnectInterval / 1000} seconds.`
+  );
   setTimeout(() => {
     client.connect(remotePort, remoteHost);
-  }, 10000);
+  }, reconnectInterval);
 });
 
 client.on("error", (err) => {
