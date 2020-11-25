@@ -2,7 +2,8 @@ import dgram from "dgram";
 import { Socket as TcpSocket, AddressInfo } from "net";
 import getLocalIp from "./utils/getLocalIp";
 import env from "dotenv";
-import Controller, { parseData } from "./controller";
+import Controller, { parseData, parseRemoteServerData } from "./controller";
+import testCommand from "./utils/testCommand";
 
 env.config();
 
@@ -88,32 +89,16 @@ client.on("error", (err) => {
 
 client.on("data", async (data) => {
   // console.log(`[TCP] got remote data\n`, data);
-  if (data.length !== 64) {
-    console.log("[TCP] Data:", data.toString());
+  if (data.slice(-2).toString() === "\r\n") {
+    console.log(`[TCP] String: "${data.slice(0, -2).toString()}"`);
     return;
   }
-  const parsedData = parseData(data);
-  const serial = parsedData.serial;
+  const parsedData = parseRemoteServerData(data);
+  const ip = parsedData.ip;
 
   let controller: Controller;
 
-  if (!serial) {
-    controller = new Controller(socket);
-  } else if (controllerBySerial[serial]) {
-    controller = controllerBySerial[serial];
-  } else {
-    console.error(`[DMN] Controller ${serial} not found。`);
-    return;
-  }
+  controller = new Controller(socket, ip);
 
-  controller.sendData(
-    data.readUInt8(1),
-    Buffer.from(
-      data
-        .slice(8)
-        .toString("hex")
-        .replace(/(00)*$/, ""),
-      "hex"
-    )
-  );
+  controller.localSendData(data.slice(4));
 });

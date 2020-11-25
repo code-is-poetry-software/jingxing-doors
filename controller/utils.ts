@@ -33,6 +33,13 @@ export function payloadParser(funcCode: string, payload: Buffer): any {
   return data;
 }
 
+export function parseRemoteServerData(data: Buffer) {
+  const ip = hexToIp(data.slice(0, 4).toString("hex"));
+  const parsed = { ip, ...parseData(data.slice(4)) };
+  console.log(`[UTL] Parsed remote server data:`, JSON.stringify(parsed));
+  return parsed;
+}
+
 export function parseBcdDate(bcd: Buffer): Date {
   // console.log("BCD Date:", bcd);
   return moment

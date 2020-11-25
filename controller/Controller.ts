@@ -1,6 +1,6 @@
 import { Socket as UdpSocket } from "dgram";
 import { Socket as TcpSocket } from "net";
-import { buildBcdDate } from "./utils";
+import { buildBcdDate, ipToHex } from "./utils";
 import funcNames from "./funcNames";
 import { crc16xmodem } from "crc";
 
@@ -52,7 +52,7 @@ export default class Controller {
     if (!config.hideLog) {
       console.log(
         `[CTL] Func ${funcNames[funcCodeStr]}, controller ${
-          this.serial || "all"
+          this.ip || "all"
         }, payload to send:`,
         payload
       );
@@ -76,14 +76,17 @@ export default class Controller {
 
   protected remoteSendData(data: Buffer) {
     if (!this.remoteSocket) return;
-    this.remoteSocket.write(data, (err) => {
+    const ipData = Buffer.alloc(4);
+    const ipHex = ipToHex(this.ip);
+    ipData.write(ipHex, "hex");
+    this.remoteSocket.write(Buffer.concat([ipData, data]), (err) => {
       if (err) {
         console.error(err);
       }
     });
   }
 
-  protected localSendData(data: Buffer, isEcho = false) {
+  localSendData(data: Buffer, isEcho = false) {
     if (!this.localSocket) return;
     if (!this.ip) {
       this.localSocket.setBroadcast(true);
