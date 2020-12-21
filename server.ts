@@ -15,6 +15,7 @@ const remotePort = +(process.env.REMOTE_PORT || 8000);
 const remoteHost = process.env.REMOTE_HOST;
 const storeId = process.env.STORE_ID;
 const reconnectInterval = +(process.env.RECONNECT_INTERVAL || "") || 5000;
+const remoteTcpTimeout = +(process.env.REMOTE_TCP_TIMEOUT || "") || 3.65e6;
 
 let controllerBySerial: { [serial: number]: Controller } = {};
 
@@ -65,7 +66,7 @@ client.on("connect", () => {
   if (client.writable) {
     client.write(`store ${storeId}\r\n`);
   }
-  client.setTimeout(360000);
+  client.setTimeout(remoteTcpTimeout);
 });
 
 client.on("timeout", () => {
