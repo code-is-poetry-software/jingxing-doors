@@ -6,9 +6,8 @@ import testCommand from "./utils/testCommand";
 
 env.config();
 
-const localPort = +(process.env.LOCAL_PORT || 6000);
-const remotePort = +(process.env.REMOTE_PORT || 8000);
-const remoteHost = process.env.REMOTE_HOST;
+const remotePort = +(process.env.REMOTE_PORT || "") || 8000;
+const remoteHost = process.env.REMOTE_HOST || "localhost";
 const storeId = process.env.STORE_ID;
 const reconnectInterval = +(process.env.RECONNECT_INTERVAL || "") || 5000;
 const remoteTcpTimeout = +(process.env.REMOTE_TCP_TIMEOUT || "") || 3.65e6;
@@ -18,11 +17,16 @@ let controllerBySerial: { [serial: number]: Controller } = {};
 const socket = dgram.createSocket("udp4"); // local network using udp
 const client = new TcpSocket(); // remote network using tcp
 
+console.log(`[TCP] Connecting ${remoteHost}:${remotePort}...`);
+client.connect(remotePort, remoteHost);
+client.setTimeout(1000);
+
 socket.on("error", (err) => {
   console.log(`[UDP] Error:\n${err.stack}.`);
   socket.close();
 });
 
+// pass door message to remote server
 socket.on("message", (msg, rinfo) => {
   console.log(`[UDP] Got message from ${rinfo.address}:${rinfo.port}.`, msg);
   const message = parseData(msg);
@@ -39,19 +43,6 @@ socket.on("message", (msg, rinfo) => {
     });
   }
 });
-
-socket.on("listening", async () => {
-  const address = socket.address() as AddressInfo;
-  console.log(`[UDP] Listening ${address.address}:${address.port}.`);
-  if (!remoteHost || !remotePort) return;
-  console.log(`[TCP] Connecting ${remoteHost}:${remotePort}...`);
-  client.connect(remotePort, remoteHost);
-  client.setTimeout(1000);
-});
-
-socket.bind(localPort);
-
-// testCommand(socket);
 
 client.on("connect", () => {
   const address = client.remoteAddress;
@@ -84,6 +75,7 @@ client.on("error", (err) => {
   console.error(`[TCP] Error: ${err.message}.`);
 });
 
+// pass remote serve data to door
 client.on("data", async (data) => {
   // console.log(`[TCP] got remote data\n`, data);
   if (data.slice(-2).toString() === "\r\n") {
