@@ -1,14 +1,10 @@
 import dgram from "dgram";
 import { Socket as TcpSocket, AddressInfo } from "net";
-import getLocalIp from "./utils/getLocalIp";
 import env from "dotenv";
 import Controller, { parseData, parseRemoteServerData } from "./controller";
 import testCommand from "./utils/testCommand";
 
 env.config();
-
-const localIp = getLocalIp();
-console.log(`[DMN] Local ip address is ${localIp}.`);
 
 const localPort = +(process.env.LOCAL_PORT || 6000);
 const remotePort = +(process.env.REMOTE_PORT || 8000);
