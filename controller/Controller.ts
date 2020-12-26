@@ -36,10 +36,12 @@ export default class Controller {
   }
 
   protected packData(funcCode: number, payload?: Buffer) {
-    const head = Buffer.from(
-      `80ffff0000${funcCode.toString(16).padStart(2, "0")}aa0000`,
-      "hex"
-    );
+    const funcCodeStr = `0x${funcCode
+      .toString(16)
+      .padStart(2, "0")
+      .toUpperCase()}`;
+
+    const head = Buffer.from(`80FFFF0000${funcCodeStr}AA0000`, "hex");
     let body = payload || Buffer.alloc(0);
 
     const crc = Buffer.from(
@@ -47,11 +49,9 @@ export default class Controller {
       "hex"
     );
 
-    const funcCodeStr = `0x${funcCode.toString(16).toUpperCase()}`;
-
     if (!config.hideLog) {
       console.log(
-        `[CTL] Func ${funcNames[funcCodeStr]}, controller ${
+        `[CTL] Func: ${funcNames[funcCodeStr]}, controller ${
           this.ip || "all"
         }, payload to send:`,
         payload
