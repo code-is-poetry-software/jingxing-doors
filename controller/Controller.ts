@@ -133,14 +133,6 @@ export default class Controller {
     this.sendData(0x80, Buffer.from([door, autoClose ? 0 : 1]));
   }
 
-  getDate() {
-    this.sendData(0x32);
-  }
-
-  setDate(date?: Date) {
-    this.sendData(0x30, buildBcdDate(date || new Date()));
-  }
-
   registerCard(cardNo: number, date: string) {
     const payload = Buffer.alloc(12);
     payload.writeUInt32LE(cardNo, 3);
@@ -154,18 +146,8 @@ export default class Controller {
     this.sendData(0x64, payload);
   }
 
-  getAuth(cardNo: number) {
-    const payload = Buffer.alloc(4);
-    payload.writeUInt32LE(cardNo, 0);
-    this.sendData(0x5a, payload);
-  }
-
   init() {
     const payload = Buffer.from("55aae11e", "hex");
     this.sendData(0x07, payload);
-  }
-
-  setServer() {
-    this.sendData(0x85);
   }
 }
