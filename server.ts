@@ -1,7 +1,11 @@
 import dgram from "dgram";
 import { Socket as TcpSocket, AddressInfo } from "net";
 import env from "dotenv";
-import Controller, { parseData, parseRemoteServerData } from "./controller";
+import Controller, {
+  ipToHex,
+  parseData,
+  parseRemoteServerData,
+} from "./controller";
 import testCommand from "./utils/testCommand";
 
 env.config();
@@ -35,7 +39,10 @@ socket.on("message", (msg, rinfo) => {
     JSON.stringify(message)
   );
   if (client.writable) {
-    client.write(msg, (err) => {
+    const ipData = Buffer.alloc(4);
+    const ipHex = ipToHex(rinfo.address);
+    ipData.write(ipHex, "hex");
+    client.write(Buffer.concat([ipData, msg]), (err) => {
       if (err) {
         console.error(err.message);
         return;
