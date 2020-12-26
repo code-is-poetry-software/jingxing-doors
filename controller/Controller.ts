@@ -36,12 +36,11 @@ export default class Controller {
   }
 
   protected packData(funcCode: number, payload?: Buffer) {
-    const funcCodeStr = `0x${funcCode
-      .toString(16)
-      .padStart(2, "0")
-      .toUpperCase()}`;
+    const funcCodeHex = funcCode.toString(16).padStart(2, "0");
+    const funcCodeStr = "0x" + funcCodeHex.toUpperCase();
 
-    const head = Buffer.from(`80FFFF0000${funcCodeStr}AA0000`, "hex");
+    const head = Buffer.from(`80ffff0000${funcCodeHex}aa0000`, "hex");
+
     let body = payload || Buffer.alloc(0);
 
     const crc = Buffer.from(
