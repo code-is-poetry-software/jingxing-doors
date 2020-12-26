@@ -1,4 +1,4 @@
-import Controller, { parseData } from "./controller";
+import Controller, { parseData, parseRemoteServerData } from "./controller";
 
 export { Controller as JxCtl };
-export { parseData };
+export { parseData, parseRemoteServerData };
