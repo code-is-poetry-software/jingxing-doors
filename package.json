@@ -1,6 +1,6 @@
 {
   "name": "jingxing-doors",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "description": "Jingxing door controller SDK and LAN daemon. 景兴JX-102脱机门禁控制器服务器端SDK和局域网守护进程",
   "keywords": [
     "JX-102",
@@ -23,7 +23,8 @@
     "*.example"
   ],
   "scripts": {
-    "start": "nodemon --watch '**/*.ts' --exec 'ts-node' server.ts",
+    "start": "ts-node server.ts",
+    "dev": "nodemon --watch '**/*.ts' --exec 'ts-node' server.ts",
     "test": "echo \"No test specified.\" && exit 0",
     "build": "tsc"
   },

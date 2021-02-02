@@ -68,10 +68,12 @@ client.on("timeout", () => {
   client.destroy(new Error("timeout"));
 });
 
-client.on("close", () => {
+client.on("close", (isError) => {
   if (!remoteHost || !remotePort) return;
   console.log(
-    `[TCP] Closed, reconnect in ${reconnectInterval / 1000} seconds.`
+    `[TCP] Closed${isError ? " for transmission error" : ""}, reconnect in ${
+      reconnectInterval / 1000
+    } seconds.`
   );
   setTimeout(() => {
     client.connect(remotePort, remoteHost);
