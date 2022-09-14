@@ -149,4 +149,20 @@ export default class Controller {
     const payload = Buffer.from("55aae11e", "hex");
     this.sendData(0x07, payload);
   }
+
+  enableRealtime() {
+    this.sendData(0x85);
+  }
+
+  disableRealtime() {
+    this.sendData(0x86);
+  }
+
+  readTime() {
+    this.sendData(0x04);
+  }
+
+  setTime() {
+    this.sendData(0x05, buildBcdDate(new Date()));
+  }
 }

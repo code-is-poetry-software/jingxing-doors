@@ -13,6 +13,11 @@ export function payloadParser(funcCode: string, payload: Buffer): any {
   const funcName = funcNames[funcCode] || `Unknown (${funcCode})`;
   const data: Record<string, any> = { funcName };
   switch (funcCode) {
+    case "0x04":
+      Object.assign(data, {
+        time: parseBcdDate(payload),
+      });
+      break;
     case "0x84":
       const allow = payload.readUInt8(7);
       const door = payload.readUInt8(8);
