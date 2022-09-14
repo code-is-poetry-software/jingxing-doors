@@ -133,9 +133,10 @@ export default class Controller {
   }
 
   registerCard(cardNo: number, date: string) {
-    const payload = Buffer.alloc(12);
+    const payload = Buffer.alloc(24);
     payload.writeUInt32LE(cardNo, 3);
     payload.write(date.replace(/-/g, "").slice(2), 0, "hex");
+    payload.write("ffffffff", 20, "hex");
     this.sendData(0x63, payload);
   }
 
