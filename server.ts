@@ -88,7 +88,13 @@ client.on("error", (err) => {
 client.on("data", async (data) => {
   // console.log(`[TCP] got remote data\n`, data);
   if (data.slice(-2).toString() === "\r\n") {
-    console.log(`[TCP] String: "${data.slice(0, -2).toString()}"`);
+    const str = data.slice(0, -2).toString();
+    console.log(`[TCP] String: "${str}"`);
+    if (str.match(/^PING\./)) {
+      client.write(
+        `PONG. Store: ${storeId}. Local time: ${new Date().toLocaleTimeString()}\r\n`
+      );
+    }
     return;
   }
   const parsedData = parseRemoteServerData(data);
