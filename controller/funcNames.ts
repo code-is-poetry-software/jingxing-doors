@@ -5,6 +5,7 @@ const funcNames: { [code: string]: string } = {
   "0x63": "Register Card",
   "0x64": "Delete Card",
   "0x80": "Open Door",
+  "0x84": "Realtime Watch",
   "0x85": "Enable Realtime",
   "0x86": "Disable Realtime",
 };
