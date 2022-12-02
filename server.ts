@@ -35,8 +35,9 @@ socket.on("message", (msg, rinfo) => {
   console.log(`[UDP] Got message from ${rinfo.address}:${rinfo.port}.`, msg);
   const message = parseData(msg);
   console.log(
-    `[UDP] Parsed message from ${rinfo.address}:${rinfo.port}.`,
-    JSON.stringify(message)
+    `[UDP] ${rinfo.address}:`,
+    `${message.funcName} (${message.funcCode})`,
+    (message.data as Buffer).toString("hex")
   );
   if (client.writable) {
     const ipData = Buffer.alloc(4);
@@ -55,12 +56,12 @@ client.on("connect", () => {
   const address = client.remoteAddress;
   const port = client.remotePort;
   console.log(
-    `[TCP] Connected to ${address}:${port}, local port: ${client.localPort}.`
+    `[TCP] Connected to ${address}:${port}, local port: ${client.localPort}, timeout ${remoteTcpTimeout}.`
   );
   if (client.writable) {
     client.write(`store ${storeId}\r\n`);
   }
-  client.setTimeout(remoteTcpTimeout);
+  client.setTimeout(remoteTcpTimeout * 2);
 });
 
 client.on("timeout", () => {
@@ -90,10 +91,11 @@ client.on("data", async (data) => {
   if (data.slice(-2).toString() === "\r\n") {
     const str = data.slice(0, -2).toString();
     console.log(`[TCP] String: "${str}"`);
-    if (str.match(/^PING\./)) {
-      client.write(
-        `PONG. Store: ${storeId}. Local time: ${new Date().toLocaleTimeString()}\r\n`
-      );
+    if (str.match(/^PING /)) {
+      const [, nonce] = str.split(" ");
+      setTimeout(() => {
+        client.write(`PONG ${nonce} ${new Date().toLocaleTimeString()}\r\n`);
+      }, 10);
     }
     return;
   }
