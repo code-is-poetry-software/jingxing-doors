@@ -37,7 +37,7 @@ socket.on("message", (msg, rinfo) => {
   console.log(
     `[UDP] ${rinfo.address}:`,
     `${message.funcName} (${message.funcCode})`,
-    (message.data as Buffer).toString("hex")
+    message.data ? (message.data as Buffer).toString("hex") : "-"
   );
   if (client.writable) {
     const ipData = Buffer.alloc(4);
