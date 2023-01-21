@@ -8,6 +8,8 @@ const funcNames: { [code: string]: string } = {
   "0x84": "Realtime Watch",
   "0x85": "Enable Realtime",
   "0x86": "Disable Realtime",
+  "0x9A": "Set Port Rate",
+  "0x9B": "Set Ending Char",
 };
 
 export default funcNames;

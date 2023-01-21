@@ -3,18 +3,10 @@ const funcResponse: Map<
   Function
 > = new Map();
 
-export function watchFuncResponse(
-  ip: string,
-  func: string,
-  callback: Function
-) {
-  funcResponse.set(`${ip}-${func}`, callback);
+export function watchFuncResponse(key: string, callback: Function) {
+  funcResponse.set(key, callback);
 }
 
-export function notifyFuncResponse(
-  ip: string,
-  func: string,
-  storeCode?: string
-) {
-  funcResponse.get(`${storeCode ? `${storeCode}-` : ""}${ip}-${func}`)?.();
+export function notifyFuncResponse(key: string) {
+  funcResponse.get(key)?.();
 }

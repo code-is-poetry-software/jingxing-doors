@@ -37,7 +37,7 @@ socket.on("message", (msg, rinfo) => {
     `${message.funcName} (${message.funcCode})`,
     message.data ? (message.data as Buffer).toString("hex") : "-"
   );
-  notifyFuncResponse(rinfo.address, message.funcCode);
+  notifyFuncResponse(`${rinfo.address}-${message.funcCode}`);
   if (client.writable) {
     const ipData = Buffer.alloc(4);
     const ipHex = ipToHex(rinfo.address);

@@ -78,7 +78,13 @@ export default class Controller {
     ipData.write(ipHex, "hex");
 
     const parsedData = parseData(data);
-    const target = `${this.remoteSocket.remoteAddress} ${this.ip} ${parsedData.funcName} (${parsedData.funcCode})`;
+    const target = `${this.remoteSocket.remoteAddress?.replace(
+      /^::ffff:/,
+      ""
+    )} ${this.ip} ${parsedData.funcName} (${parsedData.funcCode})`;
+    const key = `${this.remoteSocket.remoteAddress?.replace(/^::ffff:/, "")}-${
+      this.ip
+    }-${parsedData.funcCode}`;
     console.log(`[CTL] => ${target}`);
 
     return new Promise((resolve, reject) => {
@@ -87,11 +93,7 @@ export default class Controller {
           reject(`${target} ${err.message}`);
         }
       });
-      watchFuncResponse(
-        this.ip,
-        "0x" + data.slice(5, 6).toString("hex").toUpperCase(),
-        resolve
-      );
+      watchFuncResponse(key, resolve);
       setTimeout(() => {
         reject(`${target} timeout after ${config.commandTimeout} seconds`);
       }, config.commandTimeout * 1e3);
@@ -105,6 +107,7 @@ export default class Controller {
     }
     const parsedData = parseData(data);
     const target = `${this.ip} ${parsedData.funcName} (${parsedData.funcCode})`;
+    const key = `${this.ip}-${parsedData.funcCode}`;
     console.log(`[UDP] => ${target}`);
     this.localSocket.send(
       data,
@@ -127,11 +130,7 @@ export default class Controller {
     }
 
     return new Promise((resolve, reject) => {
-      watchFuncResponse(
-        this.ip,
-        "0x" + data.slice(5, 6).toString("hex").toUpperCase(),
-        resolve
-      );
+      watchFuncResponse(key, resolve);
       setTimeout(() => {
         reject(`timeout after ${config.commandTimeout} seconds`);
       }, config.commandTimeout * 1e3);
