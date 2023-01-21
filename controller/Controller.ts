@@ -1,17 +1,12 @@
 import { Socket as UdpSocket } from "dgram";
 import { Socket as TcpSocket } from "net";
-import { buildBcdDate, ipToHex } from "./utils";
-import funcNames from "./funcNames";
+import { buildBcdDate, ipToHex, parseData } from "./utils";
 import { crc16xmodem } from "crc";
+import { watchFuncResponse } from "./funcResponse";
 
-const { CTL_HIDE_LOG, CTL_ECHO_1, CTL_ECHO_2, CTL_ECHO_3 } = process.env;
+const { COMMAND_TIMEOUT } = process.env;
 
-const config = {
-  hideLog: !!CTL_HIDE_LOG,
-  echo1: CTL_ECHO_1 ? +CTL_ECHO_1 : 0,
-  echo2: CTL_ECHO_2 ? +CTL_ECHO_2 : 0,
-  echo3: CTL_ECHO_3 ? +CTL_ECHO_3 : 0,
-};
+const config = { commandTimeout: COMMAND_TIMEOUT ? +COMMAND_TIMEOUT : 3 };
 
 export default class Controller {
   ip: string;
@@ -48,60 +43,76 @@ export default class Controller {
       "hex"
     );
 
-    if (!config.hideLog) {
-      console.log(
-        `[CTL] Func: ${funcNames[funcCodeStr]}, controller ${
-          this.ip || "all"
-        }, payload to send:`,
-        payload
-      );
-    }
+    // console.log(
+    //   `[CTL] Func: ${funcNames[funcCodeStr]}(${funcCodeStr}), controller ${
+    //     this.ip || "all"
+    //   }, payload to send:`,
+    //   payload
+    // );
 
     const data = Buffer.concat([head, body, crc]);
 
-    console.log(`[CTL] Data packed`, data);
+    // console.log(`[CTL] Data packed`, data);
 
     return data;
   }
 
-  sendData(funcCode: number, payload?: Buffer) {
+  async sendData(funcCode: number, payload?: Buffer) {
     const data = this.packData(funcCode, payload);
-    if (this.remoteSocket) {
-      return this.remoteSendData(data);
-    } else {
-      return this.localSendData(data);
+    try {
+      if (this.remoteSocket) {
+        return await this.remoteSendData(data);
+      } else {
+        return await this.localSendData(data);
+      }
+    } catch (e) {
+      console.error(`[CTL] ${e}.`);
+      return;
     }
   }
 
-  protected remoteSendData(data: Buffer) {
+  protected async remoteSendData(data: Buffer) {
     if (!this.remoteSocket) return;
     const ipData = Buffer.alloc(4);
     const ipHex = ipToHex(this.ip);
     ipData.write(ipHex, "hex");
-    this.remoteSocket.write(Buffer.concat([ipData, data]), (err) => {
-      if (err) {
-        console.error(err);
-      }
+
+    const parsedData = parseData(data);
+    const target = `${this.remoteSocket.remoteAddress} ${this.ip} ${parsedData.funcName} (${parsedData.funcCode})`;
+    console.log(`[CTL] => ${target}`, parsedData.data.toString("hex"));
+
+    return new Promise((resolve, reject) => {
+      this.remoteSocket?.write(Buffer.concat([ipData, data]), err => {
+        if (err) {
+          reject(`${target} ${err.message}`);
+        }
+      });
+      watchFuncResponse(
+        this.ip,
+        "0x" + data.slice(5, 6).toString("hex").toUpperCase(),
+        resolve
+      );
+      setTimeout(() => {
+        reject(`${target} timeout after ${config.commandTimeout} seconds`);
+      }, config.commandTimeout * 1e3);
     });
   }
 
-  localSendData(data: Buffer, isEcho = false) {
+  async localSendData(data: Buffer) {
     if (!this.localSocket) return;
     if (!this.ip) {
       this.localSocket.setBroadcast(true);
     }
-    if (!CTL_HIDE_LOG) {
-      console.log(
-        `[CTL] Sending local data to ${this.ip || "255.255.255.255"}.`
-      );
-    }
+    const parsedData = parseData(data);
+    const target = `${this.ip} ${parsedData.funcName} (${parsedData.funcCode})`;
+    console.log(`[UDP] => ${target}`, parsedData.data.toString("hex"));
     this.localSocket.send(
       data,
       0,
       data.byteLength,
       this.port,
       this.ip || "255.255.255.255",
-      (err, result) => {
+      err => {
         if (err) {
           console.error(err);
           if (!this.ip && this.localSocket) {
@@ -111,59 +122,58 @@ export default class Controller {
       }
     );
 
-    if (!isEcho && config.echo1) {
-      setTimeout(() => {
-        this.localSendData(data, true);
-        if (config.echo2) {
-          setTimeout(() => {
-            this.localSendData(data, true);
-            if (config.echo3) {
-              setTimeout(() => {
-                this.localSendData(data, true);
-              }, +config.echo3);
-            }
-          }, +config.echo2);
-        }
-      }, +config.echo1);
+    if (!this.ip) {
+      return Promise.resolve();
     }
+
+    return new Promise((resolve, reject) => {
+      watchFuncResponse(
+        this.ip,
+        "0x" + data.slice(5, 6).toString("hex").toUpperCase(),
+        resolve
+      );
+      setTimeout(() => {
+        reject(`timeout after ${config.commandTimeout} seconds`);
+      }, config.commandTimeout * 1e3);
+    });
   }
 
-  openDoor(door: number, autoClose = true) {
-    this.sendData(0x80, Buffer.from([door, autoClose ? 0 : 1]));
+  async openDoor(door: number, autoClose = true) {
+    await this.sendData(0x80, Buffer.from([door, autoClose ? 0 : 1]));
   }
 
-  registerCard(cardNo: number, date: string) {
+  async registerCard(cardNo: number, date: string) {
     const payload = Buffer.alloc(24);
     payload.writeUInt32LE(cardNo, 3);
     payload.write(date.replace(/-/g, "").slice(2), 0, "hex");
     payload.write("ffffffff", 20, "hex");
-    this.sendData(0x63, payload);
+    await this.sendData(0x63, payload);
   }
 
-  deleteCard(cardNo: number) {
+  async deleteCard(cardNo: number) {
     const payload = Buffer.alloc(4);
     payload.writeUInt32LE(cardNo, 0);
-    this.sendData(0x64, payload);
+    await this.sendData(0x64, payload);
   }
 
-  init() {
+  async init() {
     const payload = Buffer.from("55aae11e", "hex");
-    this.sendData(0x07, payload);
+    await this.sendData(0x07, payload);
   }
 
-  enableRealtime() {
-    this.sendData(0x85);
+  async enableRealtime() {
+    await this.sendData(0x85);
   }
 
-  disableRealtime() {
-    this.sendData(0x86);
+  async disableRealtime() {
+    await this.sendData(0x86);
   }
 
-  readTime() {
-    this.sendData(0x04);
+  async readTime() {
+    await this.sendData(0x04);
   }
 
-  setTime() {
-    this.sendData(0x05, buildBcdDate(new Date()));
+  async setTime() {
+    await this.sendData(0x05, buildBcdDate(new Date()));
   }
 }

@@ -41,7 +41,7 @@ export function payloadParser(funcCode: string, payload: Buffer): any {
 export function parseRemoteServerData(data: Buffer) {
   const ip = hexToIp(data.slice(0, 4).toString("hex"));
   const parsed = { ip, ...parseData(data.slice(4)) };
-  console.log(`[UTL] Parsed remote server data:`, JSON.stringify(parsed));
+  // console.log(`[UTL] Parsed remote server data:`, JSON.stringify(parsed));
   return parsed;
 }
 

@@ -1,5 +1,5 @@
 import dgram from "dgram";
-import { Socket as TcpSocket, AddressInfo } from "net";
+import { Socket as TcpSocket } from "net";
 import env from "dotenv";
 import Controller, {
   ipToHex,
@@ -7,6 +7,7 @@ import Controller, {
   parseRemoteServerData,
 } from "./controller";
 import testCommand from "./utils/testCommand";
+import { notifyFuncResponse } from "./controller/funcResponse";
 
 env.config();
 
@@ -15,8 +16,6 @@ const remoteHost = process.env.REMOTE_HOST || "localhost";
 const storeId = process.env.STORE_ID;
 const reconnectInterval = +(process.env.RECONNECT_INTERVAL || "") || 5000;
 const remoteTcpTimeout = +(process.env.REMOTE_TCP_TIMEOUT || "") || 3.65e6;
-
-let controllerBySerial: { [serial: number]: Controller } = {};
 
 const socket = dgram.createSocket("udp4"); // local network using udp
 const client = new TcpSocket(); // remote network using tcp
@@ -32,13 +31,13 @@ socket.on("error", (err) => {
 
 // pass door message to remote server
 socket.on("message", (msg, rinfo) => {
-  console.log(`[UDP] Got message from ${rinfo.address}:${rinfo.port}.`, msg);
   const message = parseData(msg);
   console.log(
     `[UDP] ${rinfo.address}:`,
     `${message.funcName} (${message.funcCode})`,
     message.data ? (message.data as Buffer).toString("hex") : "-"
   );
+  notifyFuncResponse(rinfo.address, message.funcCode);
   if (client.writable) {
     const ipData = Buffer.alloc(4);
     const ipHex = ipToHex(rinfo.address);
@@ -90,11 +89,13 @@ client.on("data", async (data) => {
   // console.log(`[TCP] got remote data\n`, data);
   if (data.slice(-2).toString() === "\r\n") {
     const str = data.slice(0, -2).toString();
-    console.log(`[TCP] String: "${str}"`);
+    console.log(`[TCP] Got "${str}"`);
     if (str.match(/^PING /)) {
-      const [, nonce] = str.split(" ");
+      const [, nonce, storeCode] = str.split(" ");
       setTimeout(() => {
-        client.write(`PONG ${nonce} ${new Date().toLocaleTimeString()}\r\n`);
+        client.write(
+          `PONG ${nonce} ${storeCode} ${new Date().toLocaleTimeString()}\r\n`
+        );
       }, 10);
     }
     return;
@@ -106,5 +107,11 @@ client.on("data", async (data) => {
 
   controller = new Controller(socket, ip);
 
-  controller.localSendData(data.slice(4));
+  try {
+    await controller.localSendData(data.slice(4));
+  } catch (err) {
+    console.error(
+      `[UDP] ${ip} ${parsedData.funcName} (${parsedData.funcCode}) ${err}.`
+    );
+  }
 });
