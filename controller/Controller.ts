@@ -6,7 +6,7 @@ import { watchFuncResponse } from "./funcResponse";
 
 const { COMMAND_TIMEOUT } = process.env;
 
-const config = { commandTimeout: COMMAND_TIMEOUT ? +COMMAND_TIMEOUT : 3 };
+const config = { commandTimeout: COMMAND_TIMEOUT ? +COMMAND_TIMEOUT : 30 };
 
 export default class Controller {
   ip: string;
@@ -79,10 +79,10 @@ export default class Controller {
 
     const parsedData = parseData(data);
     const target = `${this.remoteSocket.remoteAddress} ${this.ip} ${parsedData.funcName} (${parsedData.funcCode})`;
-    console.log(`[CTL] => ${target}`, parsedData.data.toString("hex"));
+    console.log(`[CTL] => ${target}`);
 
     return new Promise((resolve, reject) => {
-      this.remoteSocket?.write(Buffer.concat([ipData, data]), err => {
+      this.remoteSocket?.write(Buffer.concat([ipData, data]), (err) => {
         if (err) {
           reject(`${target} ${err.message}`);
         }
@@ -105,14 +105,14 @@ export default class Controller {
     }
     const parsedData = parseData(data);
     const target = `${this.ip} ${parsedData.funcName} (${parsedData.funcCode})`;
-    console.log(`[UDP] => ${target}`, parsedData.data.toString("hex"));
+    console.log(`[UDP] => ${target}`);
     this.localSocket.send(
       data,
       0,
       data.byteLength,
       this.port,
       this.ip || "255.255.255.255",
-      err => {
+      (err) => {
         if (err) {
           console.error(err);
           if (!this.ip && this.localSocket) {
