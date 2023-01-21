@@ -9,14 +9,15 @@ export function parseData(data: Buffer) {
   return { funcCode, ...payloadParser(funcCode, payload) };
 }
 
-export function payloadParser(funcCode: string, payload: Buffer): any {
+export function payloadParser(funcCode: string, payload: Buffer) {
   const funcName = funcNames[funcCode] || `Unknown (${funcCode})`;
-  const data: Record<string, any> = { funcName };
+  const data: Record<string, any> = { funcName, text: "" };
   switch (funcCode) {
     case "0x04":
       Object.assign(data, {
         time: parseBcdDate(payload),
       });
+      data.text = data.time;
       break;
     case "0x84":
       const allow = payload.readUInt8(7);
@@ -29,13 +30,19 @@ export function payloadParser(funcCode: string, payload: Buffer): any {
         cardNo,
         time: parseBcdDate(time),
       });
+      data.text = `${cardNo} ${
+        allow ? "pass" : "reject"
+      } by ${door} at ${time}.`;
       break;
     default:
       Object.assign(data, {
         data: payload,
       });
   }
-  return data;
+  return data as {
+    funcName: string;
+    text: string;
+  };
 }
 
 export function parseRemoteServerData(data: Buffer) {

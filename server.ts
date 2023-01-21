@@ -35,7 +35,7 @@ socket.on("message", (msg, rinfo) => {
   console.log(
     `[UDP] ${rinfo.address}:`,
     `${message.funcName} (${message.funcCode})`,
-    message.data ? (message.data as Buffer).toString("hex") : "-"
+    message.text
   );
   notifyFuncResponse(`${rinfo.address}-${message.funcCode}`);
   if (client.writable) {
