@@ -17,7 +17,7 @@ export function payloadParser(funcCode: string, payload: Buffer) {
       Object.assign(data, {
         time: parseBcdDate(payload),
       });
-      data.text = data.time;
+      data.text = moment(data.time).format("Y-MM-DD HH:mm:ss");
       break;
     case "0x84":
       const allow = payload.readUInt8(7);
@@ -32,7 +32,7 @@ export function payloadParser(funcCode: string, payload: Buffer) {
       });
       data.text = `${cardNo} ${
         allow ? "pass" : "reject"
-      } by ${door} at ${time}.`;
+      } by ${door} at ${moment(data.time).format("Y-MM-DD HH:mm:ss")}.`;
       break;
     default:
       Object.assign(data, {
