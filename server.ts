@@ -16,6 +16,7 @@ const remoteHost = process.env.REMOTE_HOST || "localhost";
 const storeId = process.env.STORE_ID;
 const reconnectInterval = +(process.env.RECONNECT_INTERVAL || "") || 5000;
 const remoteTcpTimeout = +(process.env.REMOTE_TCP_TIMEOUT || "") || 3.65e6;
+const debug = !!process.env.DEBUG;
 
 const socket = dgram.createSocket("udp4"); // local network using udp
 const client = new TcpSocket(); // remote network using tcp
@@ -31,6 +32,9 @@ socket.on("error", (err) => {
 
 // pass door message to remote server
 socket.on("message", (msg, rinfo) => {
+  if (debug) {
+    console.log(`[UDP] ${rinfo.address}:${rinfo.port}`, msg);
+  }
   const message = parseData(msg);
   console.log(
     `[UDP] ${rinfo.address}:`,

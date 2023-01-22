@@ -108,6 +108,9 @@ export default class Controller {
     const parsedData = parseData(data);
     const target = `${this.ip} ${parsedData.funcName} (${parsedData.funcCode})`;
     const key = `${this.ip}-${parsedData.funcCode}`;
+    if (process.env.DEBUG) {
+      console.log(`[UDP] => ${this.ip}`, data);
+    }
     console.log(`[UDP] => ${target}`);
     this.localSocket.send(
       data,
