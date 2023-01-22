@@ -4,7 +4,6 @@ import funcNames from "./funcNames";
 
 export function parseData(data: Buffer) {
   const funcCode = "0x" + data.slice(5, 6).toString("hex").toUpperCase();
-
   const payload = data.slice(9, -2);
   return { funcCode, ...payloadParser(funcCode, payload) };
 }
@@ -20,12 +19,12 @@ export function payloadParser(funcCode: string, payload: Buffer) {
       data.text = moment(data.time).format("Y-MM-DD HH:mm:ss");
       break;
     case "0x84":
-      const allow = payload.readUInt8(7);
+      const allow = !payload.readUInt8(7);
       const door = payload.readUInt8(8);
       const cardNo = payload.readUInt32LE(9);
       const time = payload.slice(1, 6);
       Object.assign(data, {
-        allow: !allow,
+        allow,
         door,
         cardNo,
         time: parseBcdDate(time),
@@ -59,8 +58,8 @@ export function parseBcdDate(bcd: Buffer): Date {
     .toDate();
 }
 
-export function buildBcdDate(date: Date): Buffer {
-  const str = moment(date).tz("Asia/Shanghai").format("YYYYMMDDHHmmss");
+export function buildBcdDate(date?: Date): Buffer {
+  const str = moment(date).tz("Asia/Shanghai").format("YYMMDDHHmmss");
   return Buffer.from(str, "hex");
 }
 
