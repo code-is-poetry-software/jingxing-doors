@@ -110,12 +110,5 @@ client.on("data", async (data) => {
   let controller: Controller;
 
   controller = new Controller(socket, ip);
-
-  try {
-    await controller.localSendData(data.slice(4));
-  } catch (err) {
-    console.error(
-      `[UDP] ${ip} ${parsedData.funcName} (${parsedData.funcCode}) ${err}.`
-    );
-  }
+  controller.localSendDataInQueue(data.slice(4));
 });

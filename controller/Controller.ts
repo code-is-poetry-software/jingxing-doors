@@ -3,6 +3,7 @@ import { Socket as TcpSocket } from "net";
 import { buildBcdDate, ipToHex, parseData } from "./utils";
 import { crc16xmodem } from "crc";
 import { watchFuncResponse } from "./funcResponse";
+import Queue from "queue-promise";
 
 const { COMMAND_TIMEOUT } = process.env;
 
@@ -16,12 +17,22 @@ export default class Controller {
   remoteSocket?: TcpSocket;
   serverIp?: string;
   serverPort?: number;
+  queue?: Queue;
 
   constructor(socket: TcpSocket | UdpSocket, ip = "", port = 6767) {
     this.ip = ip;
     this.port = port;
     if (socket instanceof UdpSocket) {
       this.localSocket = socket;
+      this.queue = new Queue({
+        concurrent: 1,
+        interval: 100,
+      });
+      this.queue.on("resolve", (data) => {
+        if (process.env.DEBUG) {
+          console.log(`[CTL] Task in queue resolved:`, data);
+        }
+      });
     } else {
       this.remoteSocket = socket;
       if (this.serverIp || this.serverPort) {
@@ -98,6 +109,10 @@ export default class Controller {
         reject(`${target} timeout after ${config.commandTimeout} seconds`);
       }, config.commandTimeout * 1e3);
     });
+  }
+
+  localSendDataInQueue(data: Buffer) {
+    this.queue?.enqueue(() => this.localSendData(data));
   }
 
   async localSendData(data: Buffer) {
