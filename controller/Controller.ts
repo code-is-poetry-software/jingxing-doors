@@ -84,9 +84,7 @@ export default class Controller {
 
   protected async remoteSendData(data: Buffer) {
     if (!this.remoteSocket) return;
-    const ipData = Buffer.alloc(4);
     const ipHex = ipToHex(this.ip);
-    ipData.write(ipHex, "hex");
 
     const parsedData = parseData(data);
     const target = `${this.remoteSocket.remoteAddress?.replace(
@@ -99,11 +97,14 @@ export default class Controller {
     console.log(`[CTL] => ${target}`);
 
     return new Promise((resolve, reject) => {
-      this.remoteSocket?.write(Buffer.concat([ipData, data]), (err) => {
-        if (err) {
-          reject(`${target} ${err.message}`);
+      this.remoteSocket?.write(
+        Buffer.concat([Buffer.from(ipHex, "hex"), data]),
+        (err) => {
+          if (err) {
+            reject(`${target} ${err.message}`);
+          }
         }
-      });
+      );
       watchFuncResponse(key, resolve);
       setTimeout(() => {
         reject(`${target} timeout after ${config.commandTimeout} seconds`);

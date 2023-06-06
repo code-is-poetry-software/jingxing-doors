@@ -104,11 +104,23 @@ client.on("data", async (data) => {
     }
     return;
   }
-  const parsedData = parseRemoteServerData(data);
-  const ip = parsedData.ip;
 
-  let controller: Controller;
+  const splitArray = data
+    .toString("hex")
+    .split(/([0-9a-z]{8})(80ffff)/)
+    .slice(1);
 
-  controller = new Controller(socket, ip);
-  controller.localSendDataInQueue(data.slice(4));
+  Array.from(
+    { length: splitArray.length / 3 },
+    (_, i) => splitArray[3 * i] + splitArray[3 * i + 1] + splitArray[3 * i + 2]
+  ).forEach((s) => {
+    const data = Buffer.from(s, "hex");
+    const parsedData = parseRemoteServerData(data);
+    const ip = parsedData.ip;
+
+    let controller: Controller;
+
+    controller = new Controller(socket, ip);
+    controller.localSendDataInQueue(data.slice(4));
+  });
 });
